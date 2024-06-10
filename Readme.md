@@ -1,8 +1,24 @@
+## Install Enviroment
+
+If you don't have Conda installed, you can install it by downloading and installing Anaconda or Miniconda:
+- [Anaconda](https://www.anaconda.com/products/individual)
+- [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
 
 
+### Create Enviroment
+```sh
+conda env create --file environment.yml
+
+conda activate ContextFeedbackPdm
+```
 # Example of usage:
 
-Example.ipynb
+```sh
+conda activate ContextFeedbackPdm
+# run jupyter lab
+jupyter-lab
+```
+Navigate to : Example.ipynb
 
 ## Reproducibility:
 

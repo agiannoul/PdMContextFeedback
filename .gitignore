@@ -1,0 +1,16 @@
+
+*checkpoints*
+*.ipynb_checkpoints*
+
+__pycache__/
+*__pycache__*
+*evaluation/__pycache__*
+*evaluation/vus/utils/__pycache__*
+
+# PyCharm files and directories
+.idea/
+*.iml
+*.ipr
+*.iws
+*.pred
+*.real

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sklearn
 import pandas as pd
+from prts import ts_recall
 
 import subprocess
 import os
@@ -15,41 +16,48 @@ from evaluation.vus.metrics import get_metrics
 
 def calculate_ts_recall(anomalyranges, predictionsforrecall):
     generated_uuid = uuid.uuid4()
-    anomaly_ranges_file_name = f'anomaly_ranges{generated_uuid}.real'
+    #anomaly_ranges_file_name = f'anomaly_ranges{generated_uuid}.real'
     anomaly_ranges_df = pd.DataFrame(anomalyranges, columns=['Numbers'])
-    anomaly_ranges_df.to_csv(anomaly_ranges_file_name, index=False, header=False)
+    #anomaly_ranges_df.to_csv(anomaly_ranges_file_name, index=False, header=False)
 
-    prediction_file_name = f'anomaly_ranges{generated_uuid}.pred'
+    #prediction_file_name = f'anomaly_ranges{generated_uuid}.pred'
     predictions_df = pd.DataFrame(list(map(lambda x: 1 if x else 0, predictionsforrecall)), columns=['Numbers'])
-    predictions_df.to_csv(prediction_file_name, index=False, header=False)
+    #predictions_df.to_csv(prediction_file_name, index=False, header=False)
 
-    AD1 = float(
-        subprocess.run(
-            ['./evaluation/evaluate', '-t', anomaly_ranges_file_name, prediction_file_name, '1', '1', 'one', 'flat', 'flat'], 
-            stdout=subprocess.PIPE, 
-            text=True)
-            .stdout.split('\n')[1].split('=')[1].strip()
-    )
-    #  = ts_recall(anomalyranges, predictionsforrecall, alpha=1, cardinality="one", bias="flat")
-    # AD2 = ts_recall(anomalyranges, predictionsforrecall, alpha=0, cardinality="one", bias="flat")
-    AD2 = float(
-        subprocess.run(
-            ['./evaluation/evaluate', '-t', anomaly_ranges_file_name, prediction_file_name, '1', '0', 'one', 'flat', 'flat'], 
-            stdout=subprocess.PIPE, 
-            text=True)
-            .stdout.split('\n')[1].split('=')[1].strip()
-    )
-    # AD3 = ts_recall(anomalyranges, predictionsforrecall, alpha=0, cardinality="one", bias="back")
-    AD3 = float(
-        subprocess.run(
-            ['./evaluation/evaluate', '-t', anomaly_ranges_file_name, prediction_file_name, '1', '1', 'one', 'back', 'back'], 
-            stdout=subprocess.PIPE, 
-            text=True)
-            .stdout.split('\n')[1].split('=')[1].strip()
-    )
+    # AD1 = float(
+    #     subprocess.run(
+    #         ['./evaluation/evaluate', '-t', anomaly_ranges_file_name, prediction_file_name, '1', '1', 'one', 'flat', 'flat'],
+    #         stdout=subprocess.PIPE,
+    #         text=True)
+    #         .stdout.split('\n')[1].split('=')[1].strip()
+    # )
+    # #  = ts_recall(anomalyranges, predictionsforrecall, alpha=1, cardinality="one", bias="flat")
+    # # AD2 = ts_recall(anomalyranges, predictionsforrecall, alpha=0, cardinality="one", bias="flat")
+    # AD2 = float(
+    #     subprocess.run(
+    #         ['./evaluation/evaluate', '-t', anomaly_ranges_file_name, prediction_file_name, '1', '0', 'one', 'flat', 'flat'],
+    #         stdout=subprocess.PIPE,
+    #         text=True)
+    #         .stdout.split('\n')[1].split('=')[1].strip()
+    # )
+    # # AD3 = ts_recall(anomalyranges, predictionsforrecall, alpha=0, cardinality="one", bias="back")
+    # AD3 = float(
+    #     subprocess.run(
+    #         ['./evaluation/evaluate', '-t', anomaly_ranges_file_name, prediction_file_name, '1', '1', 'one', 'back', 'back'],
+    #         stdout=subprocess.PIPE,
+    #         text=True)
+    #         .stdout.split('\n')[1].split('=')[1].strip()
+    # )
+    #
+    # os.remove(anomaly_ranges_file_name)
+    # os.remove(prediction_file_name)
 
-    os.remove(anomaly_ranges_file_name)
-    os.remove(prediction_file_name)
+    AD1 = ts_recall(anomalyranges, predictionsforrecall, alpha=1, cardinality="one", bias="flat")
+    AD2 = ts_recall(anomalyranges, predictionsforrecall, alpha=0, cardinality="one", bias="flat")
+
+    AD3 = ts_recall(anomalyranges, predictionsforrecall, alpha=0, cardinality="one", bias="back")
+
+
     return AD1, AD2, AD3
 
 
