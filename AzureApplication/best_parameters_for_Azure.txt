@@ -1,0 +1,28 @@
+
+
+#### optimizing f1 without feedback
+#params= {'beta': 1, 'function_reference': 'if', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10} 0.43647192630840415
+#Optimal value of parameters: {'beta': 1, 'function_reference': 'kr', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10} and objective: 0.456440361993028
+#Optimal value of parameters: {'beta': 1, 'function_reference': 'ocsvm', 'profile_hours': 50, 'selftuning_window': 100, 'smooth_median': 10} and objective: 0.4131095637274773
+#Optimal value of parameters: {'beta': 1, 'function_reference': 'lof', 'method_n_neighbors': 40, 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10} and objective: 0.4550726078619636
+
+
+#### best parameters for Feedback on optimizing f1 parameters
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0.5, 'beta': 1, 'context_horizon': 48, 'function_reference': 'if', 'profile_hours': 100, 'selftuning_window': 50, 'smooth_median': 10, 'threshold_similarity': 0.6} and objective: 0.4940262630107543
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0.5, 'beta': 1, 'context_horizon': 48, 'function_reference': 'kr', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10, 'threshold_similarity': 0.8} and objective: 0.5356787020478225
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0, 'beta': 1, 'context_horizon': 48, 'function_reference': 'ocsvm', 'profile_hours': 50, 'selftuning_window': 100, 'smooth_median': 10, 'threshold_similarity': 0.4} and objective: 0.45762687431761084
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0, 'beta': 1, 'context_horizon': 48, 'function_reference': 'lof', 'method_n_neighbors': 40, 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10, 'threshold_similarity': 0.8} and objective: 0.5038043679705585
+
+
+############## optimizing f3 without feedback #################
+#Optimal value of parameters: {'beta': 3, 'function_reference': 'if', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10} and objective: 0.7460421684412385
+#Optimal value of parameters: {'beta': 3, 'function_reference': 'ocsvm', 'profile_hours': 200, 'selftuning_window': 0, 'smooth_median': 0} and objective: 0.6758254133000382
+#Optimal value of parameters: {'beta': 3, 'function_reference': 'lof', 'method_n_neighbors': 10, 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 5} and objective: 0.7227680488713841
+#  {'function_reference': 'kr', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10}
+
+################## best f1 using feedback on optimised f3 ############
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0.5, 'beta': 3, 'context_horizon': 48, 'function_reference': 'if', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10, 'threshold_similarity': 0.7} and objective: 0.524318518380074
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0, 'beta': 3, 'context_horizon': 48, 'function_reference': 'ocsvm', 'profile_hours': 200, 'selftuning_window': 0, 'smooth_median': 0, 'threshold_similarity': 0.5} and objective: 0.4163456922366191
+#Optimal value of parameters: {'add_raw_to_context': False, 'alpha': 0.5, 'beta': 3, 'context_horizon': 48, 'function_reference': 'kr', 'profile_hours': 150, 'selftuning_window': 0, 'smooth_median': 10, 'threshold_similarity': 0.9} and objective: 0.5367470682015004
+#Optimal value of parameters: {'threshold_similarity': 0.9, 'smooth_median': 5, 'selftuning_window': 0, 'profile_hours': 150, 'method_n_neighbors': 10, 'function_reference': 'lof', 'context_horizon': 48, 'beta': 1, 'alpha': 0.75, 'add_raw_to_context': False} and objective: 0.48299766596248533
+
