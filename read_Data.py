@@ -101,77 +101,38 @@ def returnseperated(dictdata,module,type,isf):
     return keepdf,maintenances,events,failuretimes
 
 
-def load_scnario(module,start_d,end_d):
-    namestart = start_d.replace(":", "|").replace(" ", "=")  # = "2022-11-22 15:55:16"
-
-    name = f"{module}_{namestart}"
-
-    with open(f'Data/philips/{name}.pickle', 'rb') as handle:
-        b = pickle.load(handle)
-    return b
-def All_in_one_prepareDataset(module="Module_2",type="A"):
-
-    datetups=[("2022-10-24 10:12:07", "2022-10-28 08:39:26"),("2022-11-25 09:16:40","2022-11-29 22:55:55")
-              ,("2023-02-09 07:34:12","2023-02-10 00:02:57"),("2023-03-07 12:10:41","2023-03-09 14:30:40")
-              ,("2023-05-11 00:00:00","2023-05-12 10:23:35"),("2023-06-14 06:12:42","2023-06-16 00:34:35")
-              ,("2023-07-05 19:58:53","2023-07-10 00:37:05"),("2023-07-23 13:20:12","2023-07-25 13:06:09")]
-
-    isfailure=[1,1,0,0,0,1,0,1]
-
-
-    dictdata = load_scnario(module, datetups[0][0], datetups[0][1])
-    keepdf,allamaintenances,allevents,allfailuretimes=returnseperated(dictdata,module,type,isfailure[0])
-    dfs=[keepdf]
-    for tup_episode,isf in zip(datetups[1:],isfailure[1:]):
-        dictdata = load_scnario(module, tup_episode[0], tup_episode[1])
-        keepdf,maintenances,events,failuretimes = returnseperated( dictdata, module,type,isf)
-
-        allamaintenances = pd.concat([allamaintenances, maintenances], ignore_index=False, sort=False)
-        dfs.append(keepdf)
-        allevents = pd.concat([allevents,events], ignore_index=False, sort=False)
-        allfailuretimes.extend(failuretimes)
-
-
-    data_events={}
-    for ind,row in allevents.iterrows():
-
-        if "speed" in row["desc"]:
-            code="speed_change"
-        else:
-            code=row['desc']
-
-        if "8" in str(code) or "47" in str(code) or "44" in str(code) or "42" in str(code) or "31" in str(code) or "51" in str(code) or "43" in str(code) or "80" in str(code) or "81" in str(code):
-            continue
-        if code in data_events.keys():
-            data_events[code].append(row["dt"])
-        else:
-            data_events[code]=[row["dt"]]
-
-    for ind,row in allamaintenances.iterrows():
-        code=f"{row['errorCode']}@{row['Component']}"
-        if "0@" in str(code) or "9@" in str(code) or  "8" in str(code) or "47" in str(code) or "44" in str(code) or "42" in str(code) or "31" in str(code) or "51" in str(code) or "43" in str(code) or "80" in str(code) or "81" in str(code):
-            continue
-        if code in data_events.keys():
-            data_events[code].append(ind)
-        else:
-            data_events[code]=[ind]
-
-
-    names=[key for key in data_events.keys()]
-    types=[get_type(name) for name in names]
-    event_lists=[data_events[name] for name in names]
-
-    return dfs,names,event_lists,types,isfailure
-
 def philips_semi_supervised(period_or_count="100"):
-    dfs, names, event_lists,types,isfailure=All_in_one_prepareDataset(module="Module_2",type="A")
+    dfs = []
+    for i in range(8):
+        df = pd.read_csv(f"m2_episode_{i}.csv", index_col=0, header=0)
+        df.index = pd.to_datetime(df.index)
+        dfs.append(df)
+
+    typesdf = pd.read_csv("types.csv", index_col=0, header=0)
+    names = [nam for nam in typesdf["name"]]
+    types = [nam for nam in typesdf["types"]]
+
+    dfffailure = pd.read_csv("files_end_with_failure.csv", index_col=0, header=0)
+    isfailure = [isf for isf in dfffailure["end_with_fail"].values]
+
+    event_lists = []
+    for name in names:
+        dfev = pd.read_csv(f"{name}.csv")
+        lista = [dtt for dtt in pd.to_datetime(dfev["Timestamp"]).values]
+        lista.sort()
+        event_lists.append(lista)
+    print(names)
+    print(event_lists)
+    print(isfailure)
+    print(types)
+
     list_train = []
     list_test = []
     for i in range(len(dfs)):
         traindf, testdf = generate_auto_train_test(dfs[i], period_or_count)
         list_train.append(traindf)
         list_test.append(testdf)
-    return list_train, list_test,names, event_lists,types,isfailure
+    return list_train, list_test, names, event_lists, types, isfailure
 
 
 def get_type(name):
