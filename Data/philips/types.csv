@@ -1,0 +1,6 @@
+,name,types
+0,speed_change,configuration
+1,weld,configuration
+2,D,isolated
+3,Other_Module-change,configuration
+4,eval@Module_2_A,isolated
