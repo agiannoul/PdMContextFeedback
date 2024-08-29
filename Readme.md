@@ -25,7 +25,7 @@ Navigate to : Example.ipynb
 Using main_reproducibility.py we can fine tune methods and context to generate the results shown in paper.
 
 
-### Code for Metro Dataset: MetroApplication
+### Code for Azure Dataset: AzureApplication
 
 AzureMain.py : Used to  fine-tune hyperparameters for the different methods using Mango framework.
 AzureFeedback: functions for running Application of Feedback in fine-tuned solutions for Metro Dataset.
