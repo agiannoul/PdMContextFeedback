@@ -1,3 +1,4 @@
+import os
 import pickle
 
 import matplotlib.pyplot as plt
@@ -104,21 +105,21 @@ def returnseperated(dictdata,module,type,isf):
 def philips_semi_supervised(period_or_count="100"):
     dfs = []
     for i in range(8):
-        df = pd.read_csv(f"m2_episode_{i}.csv", index_col=0, header=0)
-        df.index = pd.to_datetime(df.index)
+        df = pd.read_csv(f"./Data/philips/m2_episode_{i}.csv", index_col=0, header=0)
+        df.index = [dt.replace(tzinfo=None) for dt in pd.to_datetime(df.index)]
         dfs.append(df)
 
-    typesdf = pd.read_csv("types.csv", index_col=0, header=0)
+    typesdf = pd.read_csv("./Data/philips/types.csv", index_col=0, header=0)
     names = [nam for nam in typesdf["name"]]
     types = [nam for nam in typesdf["types"]]
 
-    dfffailure = pd.read_csv("files_end_with_failure.csv", index_col=0, header=0)
+    dfffailure = pd.read_csv("./Data/philips/files_end_with_failure.csv", index_col=0, header=0)
     isfailure = [isf for isf in dfffailure["end_with_fail"].values]
 
     event_lists = []
     for name in names:
-        dfev = pd.read_csv(f"{name}.csv")
-        lista = [dtt for dtt in pd.to_datetime(dfev["Timestamp"]).values]
+        dfev = pd.read_csv(f"./Data/philips/{name}.csv")
+        lista =  pd.to_datetime(dfev["Timestamp"]).dt.tz_localize(None).tolist()
         lista.sort()
         event_lists.append(lista)
     print(names)
@@ -308,3 +309,66 @@ def AzureDataOneSource_list(source=1):
     #     plt.axvline(fail)
     # plt.show()
     return dftelemetry,event_list,names,types,"failures"
+
+
+def metro_dataset(period_or_count=f"20 hours"):
+    df=pd.read_csv("./Data/metropt-3/scenarios/1.csv")
+    df.index=pd.to_datetime(df["timestamp"])
+    df.sort_index(inplace=True)
+    df.drop(["timestamp"], axis=1, inplace=True)
+    df_resampled = df.resample("10 min").mean()
+    df_resampled=df_resampled.dropna()
+    failures=pd.read_csv("./Data/metropt-3/scenarios/failures.csv")
+    dffails=failures[failures["type"]=="failure"]
+    failure_dates=[fdt for fdt in pd.to_datetime(dffails["date"])]
+
+    alerts=failures[failures["type"]=="A4FD1"]
+    names=["automated alerts"]
+    event_list=[[dt for dt in pd.to_datetime(alerts["date"])]]
+    types=["isolated"]
+    aditional_names=["COMP","DV_eletric","MPG","Towers","LPS","Pressure_switch","Oil_level","Caudal_impulses"]
+    for cname in aditional_names:
+        types.append("configuration")
+        names.append(cname)
+        event_list.append([dt for dt,pre_v,c_v in zip(df_resampled.index[1:],df_resampled[cname].values[:-1],df_resampled[cname].values[1:]) if (pre_v==0 and c_v!=0) or (pre_v!=0 and c_v==0)])
+    failure_dates.append(df_resampled.index[-1])
+    failure_dates=sorted(failure_dates)
+    start_date = df.index[0]
+
+    df_resampled=df_resampled[[col for col in df_resampled.columns if col not in aditional_names]]
+    Traindfs=[]
+    Testdfs=[]
+    isfailure=[]
+    for split_date in failure_dates:
+        subset = df_resampled[(df_resampled.index >= start_date) & (df_resampled.index < split_date)]
+        cutoff_time = start_date + pd.Timedelta(hours=int(period_or_count.split(" ")[0]))
+        df_first_n_hours = subset[subset.index < cutoff_time]  # First N hours
+        df_remaining = subset[subset.index >= cutoff_time]  # Remaining data
+        Traindfs.append(df_first_n_hours)
+        Testdfs.append(df_remaining)
+        start_date = split_date  # Move start forward
+        isfailure.append(1)
+    isfailure[-1]=0
+    with open("./Data/metropt-3/scenarios/all.picckle", "wb") as file:
+        data={
+            "Traindfs":Traindfs,
+            "Testdfs":Testdfs,
+            "names":names,
+            "event_list":event_list,
+            "types":types,
+            "isfailure":isfailure
+        }
+
+        pickle.dump(data, file)
+    return Traindfs, Testdfs, names, event_list,types,isfailure
+
+def load_metro_from_pickle():
+    with  open("./Data/metropt-3/scenarios/all.picckle", "rb") as file:
+        loaded_data = pickle.load(file)
+        Traindfs=loaded_data["Traindfs"]
+        Testdfs=loaded_data["Testdfs"]
+        names=loaded_data["names"]
+        event_list=loaded_data["event_list"]
+        types=loaded_data["types"]
+        isfailure=loaded_data["isfailure"]
+    return Traindfs, Testdfs, names, event_list, types, isfailure

@@ -7,7 +7,6 @@ import read_Data
 import utils
 import evaluation.evaluation as eval
 from ContextApp.FalsePositives import PruneFPstream
-from mango import scheduler, Tuner
 import re
 
 def run_full_pipeline_without_cateforical(selftuning_window,smooth_median,profile_hours,function_reference,plot_them,method_params,
@@ -215,7 +214,7 @@ def plot_inner(x,y,line,name="(a) ocsvm"):
     plt.axhline(line, color="grey", linewidth=linew)
     plt.xlabel(f"similarity threshold \n {name}")
     plt.ylabel("F1-score")
-    plt.ylim([0,0.7])
+    plt.ylim([0,0.6])
     plt.grid(True)
 
 
@@ -226,7 +225,7 @@ def plot_nice():
     y=[0.22043010752688175, 0.18637532133676094, 0.17750826901874311, 0.17723880597014924, 0.17723880597014924, 0.17723880597014924, 0.17723880597014924, 0.17723880597014924]
 
     line = 0.17
-    plt.subplot(221)
+    plt.subplot(321)
     plot_inner(x, y, line, name="(a) OCSVM")
 
 
@@ -236,7 +235,7 @@ def plot_nice():
 
 
     line=0.26
-    plt.subplot(223)
+    plt.subplot(323)
     plot_inner(x,y,line,name="(c) pb")
 
     x = [0.2,0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -245,7 +244,7 @@ def plot_nice():
 
 
     line = 0.25
-    plt.subplot(222)
+    plt.subplot(322)
     plot_inner(x, y, line, name="(b) IF")
 
     x = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -253,8 +252,16 @@ def plot_nice():
     y = [0.5220910623946037, 0.5168614357262103, 0.48374999999999996, 0.4287280701754386, 0.42755604155276106, 0.4117956819378621, 0.40750390828556543, 0.40750390828556543]
 
     line = 0.27
-    plt.subplot(224)
+    plt.subplot(324)
     plot_inner(x, y, line, name="(d) LOF")
+
+    x = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    # y = [0.5396109388215394, 0.590134529147982, 0.5043534343760078, 0.47537993920972643, 0.4364731653888281, 0.3801574051991415, 0.2974990668159761, 0.2960074280408542]
+    y = [0.45,0.426,0.393,0.356,0.335,0.320,0.319,0.307]
+
+    line = 0.237
+    plt.subplot(325)
+    plot_inner(x, y, line, name="(3) DeepAnt")
 
     plt.show()
 
@@ -310,8 +317,8 @@ def get_recall_precission_FPR_IF():
         "selftuning_window": 10,
         "function_reference": "if",
         "threshold_similarity": 0.85,
-        "alpha": 0.25,
-        "context_horizon": 24,
+        "alpha": 0.75,
+        "context_horizon": 8,
     }
 
     opt = optimization_objective(param_space,printhem=True)

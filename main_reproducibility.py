@@ -2,8 +2,10 @@ import re
 
 import methods
 from Philips_Application import philips_application_main
+from Philips_Application.general_run_philips import run_experiment_philips
 from Philips_Application.philips_application_main import run_Philips_Feedback_Application_mango
 from Philips_Application.philips_main import run_Philips_main_mango
+from metroapplication.test_new_dataset import run_metro
 
 
 def fine_tunne_methods_in_Azure_datasets():
@@ -129,24 +131,36 @@ def Azure_run_single(params):
 
 
 
+def run_philips_AD_with_Feedback():
+    run_experiment_philips(method_name="deepAnt", profile_hours=350, smooth_median=20, selftuning_window=100, alpha=0.25,
+                           beta_initial=4,context_horizon=8)
+    # pass similarities!=None e.g. similarities=0.3 for similarity threshold to prune false alarms.
+    run_experiment_philips(method_name="if", profile_hours=30, smooth_median=5, selftuning_window=10,
+                           alpha=0.75,
+                           beta_initial=1,context_horizon=8)
+    run_experiment_philips(method_name="ocsvm", profile_hours=30, smooth_median=10, selftuning_window=40,
+                           alpha=0,
+                           beta_initial=1,context_horizon=24)
+    run_experiment_philips(method_name="lof", profile_hours=50, smooth_median=10, selftuning_window=40,
+                           alpha=0,
+                           beta_initial=2,context_horizon=8)
+    run_experiment_philips(method_name="kr", profile_hours=30, smooth_median=10, selftuning_window=60,
+                           alpha=0.75,
+                           beta_initial=1, context_horizon=8)
+
+def run_Azure_with_AD():
+    from AzureApplication.general_run_Azure import run_experiment_Azure
+    from AzureApplication.AzureFeedback import initialize_Azure_data
+
+    initialize_Azure_data()
+    run_experiment_Azure()
+
+def run_Metro_with_AD():
+    from metroapplication.test_new_dataset import run_experiment
+    # this run all AD algorithms on multiple similarity thresholds
+    run_experiment()
+
 if __name__ == '__main__':
-    # # Example of pipeline, fine tune without context and then use
-    # # fine tuned solution along with context.
-    # params=fine_tunne_methods_in_Azure_datasets()
-    # fine_tunne_Feedback_in_Azure_datasets(params)
-
-
-    # # Run a complete example for Azure Dataset.
-    # params= {'add_raw_to_context': False, 'alpha': 0, 'beta': 1, 'context_horizon': 48,
-    #          'function_reference': 'lof', 'method_n_neighbors': 40, 'profile_hours': 150,
-    #          'selftuning_window': 0, 'smooth_median': 10, 'threshold_similarity': 0.8}
-    #
-    # Azure_run_single(params)
-
-    # Run a complete example for Philips Dataset.
-    param_space={
-        "profile_hours": 30, "smooth_median": 10,"selftuning_window": 60,
-        "function_reference": "kr", "threshold_similarity": 0.5, "alpha": 0.75,
-        "context_horizon": 8,
-    }
-    run_single_Philips(param_space)
+    run_philips_AD_with_Feedback()
+    # run_Metro_with_AD()
+    #run_Azure_with_AD()

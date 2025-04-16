@@ -72,8 +72,19 @@ def constraint_function(params_configuration_list):
 
     return result
 
+list_of_df = None
+old_context_list_dfs = None
+old_isfailure = None
+old_all_sources = None
 
 
+def initialize_Azure_data():
+    global old_isfailure
+    global old_context_list_dfs
+    global old_all_sources
+    global list_of_df
+
+    list_of_df, old_context_list_dfs, old_isfailure, old_all_sources = read_Data.AzureData()
 
 
 def run_detection(list_train,list_test,context_list_dfs,all_sources,function_reference,selftuning_window,smooth_median,method_params,beta,isfailure,profile_hours,plot_them):
@@ -142,7 +153,6 @@ def run_detection(list_train,list_test,context_list_dfs,all_sources,function_ref
             pickle.dump(tostore, f)
     return tostore["predictions_all"],tostore["dates_all"],tostore["sources_data"],tostore["sources_context"],tostore["sources_failures"],tostore["sources_predictions"],tostore["threshold"]
 
-list_of_df, old_context_list_dfs,old_isfailure,old_all_sources = read_Data.AzureData()
 
 def run_full_pipeline(selftuning_window,smooth_median,profile_hours,
                                           function_reference,plot_them,method_params,

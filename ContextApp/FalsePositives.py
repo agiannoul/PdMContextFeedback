@@ -10,7 +10,7 @@ from PdmContext.ContextGeneration import ContextGenerator, ContextGeneratorBatch
 from PdmContext.utils.causal_discovery_functions import calculate_with_pc
 from PdmContext.utils.dbconnector import SQLiteHandler
 from PdmContext.Pipelines import ContextAndDatabase
-from PdmContext.utils.structure import Context
+from PdmContext.utils.structure import Context, Eventpoint
 from PdmContext.utils.distances import distance_cc
 import kshape.core as kcore
 from pathlib import Path
@@ -26,7 +26,7 @@ class PruneFP():
 
     self.database_name is the path to pre-calculated contexts
     """
-    def __init__(self,data,contextdata,scores,threshold_score,times,evaluations,threshold_similarity=0.5,alpha=0.5,context_horizon="8 hours",username="Metro",consider_FP="36 hours",add_raw_to_context=True):
+    def __init__(self,data,contextdata,scores,threshold_score,times,evaluations,threshold_similarity=0.5,alpha=0.5,context_horizon="8 hours",username="Metro",consider_FP="36 hours",add_raw_to_context=True,checkincrease=False):
         self.threshold_score=threshold_score
         self.consider_FP=consider_FP
         self.scores=scores
@@ -34,12 +34,11 @@ class PruneFP():
         self.threshold_similarity=threshold_similarity
         self.evaluations=evaluations
         self.alpha=alpha
-
         self.Fps = []
-
+        self.checkincrease=checkincrease
         if username is not None:
             Dataset_name = username.split("_")[0]
-            self.database_name=f"./Databases/{Dataset_name}/ch_{context_horizon.replace(' ','_')}_{username}.pickle"
+            self.database_name=f"./Databases/{Dataset_name}/ch_{context_horizon.replace(' ','_')}_alpha_0.5_{username}.pickle"
         else:
             self.database_name=None
         df=pd.DataFrame({"scores":scores})
@@ -122,7 +121,17 @@ class PruneFP():
                 self.false_positives[i]=1
             else:
                 self.false_positives[i]=0
-
+        self.Fps = []
+        for dtt, fp in zip(self.times, self.false_positives):
+            if fp == 1:
+                temp_context = self.get_context(dtt)
+                if self.checkincrease:
+                    for edge, charac in zip(temp_context.CR["edges"], temp_context.CR["characterization"]):
+                        if edge[1] == "scores" and charac == "increase":
+                            self.Fps.append(temp_context)
+                            break
+                else:
+                    self.Fps.append(temp_context)
         self.Fps=[self.get_context(dtt) for dtt,fp in zip(self.times,self.false_positives) if fp==1]
         
 
@@ -143,8 +152,8 @@ class PruneFPstream():
                  contextdata_list=[],types=[],names=[],
                  threshold_similarity=0.5, alpha=0.5, context_horizon="8 hours",
                  username="Philips", consider_FP="8 hours",
-                 savedistances=False):
-
+                 savedistances=False,checkincrease=True):
+        self.checkincrease=checkincrease
         self.threshold_score = threshold_score
         self.consider_FP = consider_FP
         self.scores = scores
@@ -170,13 +179,12 @@ class PruneFPstream():
         self.contextlist= {}
 
         self.database_name = f"./Databases/stream/ch_{context_horizon.replace(' ', '_')}_{username}.db"
-        self.known_distance_name = f"./Databases/stream/distances/ch_{context_horizon.replace(' ', '_')}_{username}.pickle"
+        self.known_distance_name = f"./Databases/stream/distances/ch_{context_horizon.replace(' ', '_')}_alpha_{self.alpha}_{username}.pickle"
         self.traget_name = "scores"
         self.dont_save=False
         my_file = Path(self.database_name)
         if my_file.is_file() and username is not None:
             self.load_context()
-            self.dont_save=True
             self.known_distance=self._load_distances()
         else:
             self.known_distance={}
@@ -184,7 +192,7 @@ class PruneFPstream():
             sizeall=sum([len(lista[1]) for lista in continuous_triple]) + sum([len(lista) for lista in contextdata_list])
 
 
-            stream = simulate_stream(continuous_triple, event_triple, self.traget_name)
+            stream = simulate_stream(continuous_triple, event_triple,[], self.traget_name)
 
             con_gen = ContextGenerator(target=self.traget_name, context_horizon=context_horizon, Causalityfunct=calculate_with_pc)
             source = "press"
@@ -194,16 +202,35 @@ class PruneFPstream():
 
             #print(sizeall)
             #counter=0
-            for record in stream:
+            allrecords=[record for record in stream]
+            # for record in tqdm(allrecords):
+            #     #counter+=1
+            #     #if counter%(sizeall//100)==0:
+            #     #    print(counter/sizeall)
+            #     contextpipeline.collect_data(timestamp=record["timestamp"], source=source, name=record["name"],
+            #                                   type=record["type"], value=record["value"])
+            # tempcontextlist=contextpipeline.Contexter.contexts
+            # self.contextlist = {}
+            # for cont in tempcontextlist:
+            #     self.contextlist[cont.timestamp] = cont
+            tempcontextlist=[]
+            for record in tqdm(allrecords):
                 #counter+=1
                 #if counter%(sizeall//100)==0:
                 #    print(counter/sizeall)
-                contextpipeline.collect_data(timestamp=record["timestamp"], source=source, name=record["name"],
+                if record["name"] == self.traget_name and record["value"] > self.threshold_score:
+                    context_obj=contextpipeline.collect_data(timestamp=record["timestamp"], source=source, name=record["name"],
                                               type=record["type"], value=record["value"])
-            tempcontextlist=contextpipeline.Contexter.contexts
+                    tempcontextlist.append(context_obj)
+                else:
+                    eventpoint = Eventpoint(code=record["name"], source=source, timestamp=record["timestamp"], details=record["value"], type=record["type"])
+                    contextpipeline.Contexter.add_to_buffer(eventpoint)
+
+
             self.contextlist = {}
             for cont in tempcontextlist:
                 self.contextlist[cont.timestamp] = cont
+
 
     def load_context(self):
         database = SQLiteHandler(db_name=self.database_name)
@@ -225,7 +252,9 @@ class PruneFPstream():
             if sc <= self.threshold_score:
                 predict.append(0)
             else:
-                if self.similar_to_fp(self.contextlist[dtt]):
+                if dtt not in self.contextlist.keys():
+                    predict.append(0)
+                elif self.similar_to_fp(self.contextlist[dtt]):
                     predict.append(0)
                 else:
                     predict.append(1)
@@ -254,11 +283,16 @@ class PruneFPstream():
         self.Fps = []
         for dtt, fp in zip(self.times, self.false_positives):
             if fp == 1:
+                if dtt not in self.contextlist.keys():
+                    continue
                 temp_context=self.contextlist[dtt]
-                for edge, charac in zip(temp_context.CR["edges"],temp_context.CR["characterization"]):
-                    if edge[1]==self.traget_name and charac=="increase":
-                        self.Fps.append(temp_context)
-                        break
+                if self.checkincrease:
+                    for edge, charac in zip(temp_context.CR["edges"],temp_context.CR["characterization"]):
+                        if edge[1]==self.traget_name and charac=="increase":
+                            self.Fps.append(temp_context)
+                            break
+                else:
+                    self.Fps.append(temp_context)
         #random.shuffle(self.Fps)
         #print(len(self.Fps))
     def similar_to_fp(self, context: Context):
@@ -269,6 +303,8 @@ class PruneFPstream():
             else:
                 _,similarities = my_distance(con, context, a=self.alpha, verbose=False)
                 self.known_distance[tup]=similarities
+            if similarities[1] is None or similarities[0] is None:
+                ok="ok"
             similarity=self.alpha*similarities[0]+(1-self.alpha)*similarities[1]
             if similarity > self.threshold_similarity:
                 return True
@@ -284,6 +320,7 @@ class PruneFPstream():
         if my_file.is_file():
             with open(self.known_distance_name, 'rb') as f:
                 return pickle.load(f)
+            self.dont_save=True
         else:
             return {}
 
@@ -370,7 +407,7 @@ def my_distance(context1: Context, context2: Context, a, verbose=False):
     similarity=calculate_jaccard(a, context1, context2)
 
     if similarity is None:
-        return cc_m, (cc_m, similarity)
+        return cc_m, (cc_m, 0)
     else:
         return a * cc_m + b * similarity,(cc_m, similarity)
 

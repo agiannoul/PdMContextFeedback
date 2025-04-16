@@ -2,6 +2,8 @@
 from sklearn.ensemble import IsolationForest as isolation_forest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
+
+from deepAnt.cnn_inner import CNN
 from models.distance_based import distance_based_k_r as pb_k_r
 
 
@@ -33,3 +35,11 @@ def distance_based(normal,target,*args, **kwargs):
     clf=pb_k_r(k=1)
     clf.fit(normal.values)
     return clf.predict(target.values)
+
+
+def deepAnt(normal,target,window_size=30,*args, **kwargs):
+    clf = CNN(window_size=window_size, num_channel=[32, 32, 40], feats=normal.shape[1],
+                   lr=0.0008, batch_size=128)
+    clf.fit(normal.values.astype('float32'))
+    score = clf.decision_function(target.values.astype('float32'))
+    return score

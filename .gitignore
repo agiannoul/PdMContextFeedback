@@ -14,3 +14,16 @@ __pycache__/
 *.iws
 *.pred
 *.real
+*.pickle
+*.db
+*.pck
+*.csv
+*.picckle
+
+rdeepAnt
+rif
+rlof
+rocsvm
+rpb
+
+!all.picckle

@@ -1,7 +1,7 @@
-import matplotlib.pyplot as plt
 
 import Philips_Application.philips_robustness as phlips_plots
 
+from metroapplication.test_new_dataset import similarity_tech
 
 
 def Azure_plots():
@@ -29,7 +29,13 @@ def Philips_plots():
     # phlips_plots.get_recall_precission_FPR_OCSVM()
     # phlips_plots.get_recall_precission_FPR_IF()
 
+def metro_plots():
+    similarity_tech()
+
+
 
 if __name__ == '__main__':
     Philips_plots()
-    Azure_plots()
+    # Azure_plots()
+    # metro_plots()
+

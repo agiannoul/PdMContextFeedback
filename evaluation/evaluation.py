@@ -698,9 +698,9 @@ def AUCPR_anom(predictions,anomalyranges,leadranges=None,resolution=100,beta=1,s
     allresults,best_th=_calculate_AD_levels_AUC(resolution, unique, step,predictions, anomalyranges,
                                                                                           leadranges, beta,
                                                                                             None)
-    results = _VUS_results(flatened_scores, anomalyranges, best_th, slidingWindow_vus)
+    # results = _VUS_results(flatened_scores, anomalyranges, best_th, slidingWindow_vus)
 
-    return allresults, results
+    return allresults, {}
 
 
 def AUCPR_new(predictions, Failuretype=None, datesofscores=[], maintenances=None, isfailure=[], PH="100", lead="20",
@@ -726,7 +726,7 @@ def AUCPR_new(predictions, Failuretype=None, datesofscores=[], maintenances=None
 
     allresults,best_th=_calculate_AD_levels_AUC(resolution, unique, step, predictions, anomalyranges, leadranges, beta, ignore_range)
 
-    results=_VUS_results(flatened_scores, anomalyranges, best_th, slidingWindow_vus)
+    # results=_VUS_results(flatened_scores, anomalyranges, best_th, slidingWindow_vus)
 
     if plot_them:
         plt.plot([i for i in range(len(predictions))],predictions)
@@ -739,7 +739,7 @@ def AUCPR_new(predictions, Failuretype=None, datesofscores=[], maintenances=None
         plt.grid(True)
         plt.legend()
         plt.show()
-    return allresults, results
+    return allresults, {}
 
 def _inner_plot(color,rangearay,datesofscores,maxvalue):
 
@@ -831,7 +831,7 @@ def _calculate_AD_levels_for_all_thresholds(resolution,unique,step,predictions,a
     allresults = []
 
     for i in range(resolution + 2):
-        examined_th = unique[min(i * step, len(unique) - 1)]
+        examined_th = unique[min(i * step, len(unique) - 2)]
         threshold = [examined_th for predcsss in predictions]
 
         recall, Precision, f1, FPR = calculate_AD_levels(anomalyranges, leadranges, predictions, ignore_range,
